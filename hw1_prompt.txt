@@ -1,0 +1,84 @@
+I am going to give you a text description of a query and then a query in relation algebra.
+Explain if the relational algebra query is equivalent to the text description. If it is, explain why. If it is not, explain why not.
+This is the schema that is used for the queries:
+
+```
+classroom {
+    building string
+    room_number number
+    capacity number 
+}
+
+department {
+    dept_name string
+    building string
+    budget number 
+}
+
+course {
+    course_id string
+    title string
+    dept_name string
+    credits number 
+}
+
+instructor {
+    ID number
+    name string
+    dept_name string
+    salary number 
+}
+
+section {
+    course_id string
+    sec_id number
+    semester string
+    year number
+    building string
+    room_number number
+    time_slot_id string 
+}
+
+teaches {
+    ID number
+    course_id string
+    sec_id number
+    semester string
+    year number 
+}
+
+student {
+    ID number
+    name string
+    dept_name string
+    tot_cred number 
+}
+
+takes {
+    ID number
+    course_id string
+    sec_id number
+    semester string
+    year number
+    grade string 
+}
+
+advisor {
+    s_id number
+    i_id number 
+}
+
+time_slot {
+    time_slot_id string
+    day string
+    start_hr number
+    start_min number
+    end_hr number
+    end_min number 
+}
+
+prereq {
+    course_id string
+    prereq_id string 
+}
+```
