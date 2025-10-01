@@ -10,7 +10,7 @@ CREATE TABLE Employee (
 -- Subclasses:
 CREATE TABLE Driver (
     employee_id INT PRIMARY KEY,
-    license_number VARCHAR(100) UNIQUE NOT NULL,
+    license_num VARCHAR(50) UNIQUE NOT NULL,
     FOREIGN KEY (employee_id) REFERENCES Employee(employee_id)
 );
 
@@ -123,8 +123,8 @@ CREATE TABLE PerformsMaintenance (
     mechanic_id INT,
     train_id INT,
     station_id INT,
-    maintenance_date DATE NOT NULL, -- Attribute on a relationship
-    PRIMARY KEY (mechanic_id, train_id, station_id, maintenance_date),
+    date_performed DATETIME NOT NULL, -- Attribute on a relationship
+    PRIMARY KEY (mechanic_id, train_id, station_id, date_performed),
     FOREIGN KEY (mechanic_id) REFERENCES Mechanic(employee_id),
     FOREIGN KEY (train_id) REFERENCES Train(train_id),
     FOREIGN KEY (station_id) REFERENCES Station(station_id)
