@@ -107,7 +107,7 @@ JOIN (
 	GROUP BY masterid
 	HAVING COUNT(DISTINCT teams.name) = 1 AND MIN(teams.name) = 'Brooklyn Dodgers'
 	-- get players who played for one team name
-	-- then use MIN to grab the (only) team name from the row and check if it is 'Brooklyn Dodgers'
+	-- then use MIN() to grab the (only) team name from the row and check if it is 'Brooklyn Dodgers'
 ) USING(masterid)
 ORDER BY namelast, namefirst
 ```
