@@ -69,7 +69,8 @@ WITH best_threb_season AS (
 		MAX(threb) as threb_best
 	FROM batting
 		JOIN master USING (masterid)
-	GROUP BY namefirst, namelast, masterid)
+	GROUP BY namefirst, namelast, masterid, yearid
+)
 
 SELECT *
 FROM (
@@ -84,7 +85,7 @@ WHERE threb_rank <= 10
 
 
 -- 5. Yankee Run Kings - List the name, year, and number of home runs hit for each New York Yankee batter,
---  but only if they hit the most home runs for any player in that season.
+-- but only if they hit the most home runs for any player in that season.
 
 WITH best_hr_by_season AS (
 	SELECT
@@ -111,8 +112,8 @@ WHERE teams.name = 'New York Yankees'
 
 
 -- 6. Third best home run hitters each year - List the first name, last name, year and number of home runs
---  (column HR in the Batting table) of every player that hit the third most number of home runs for that year.
---  Order by the year.
+-- (column HR in the Batting table) of every player that hit the third most number of home runs for that year.
+-- Order by the year.
 
 SELECT
 	namefirst,
@@ -129,11 +130,11 @@ WHERE hr_rank = 3
 ORDER BY yearid, namelast, namefirst
 
 
+
 -- 7. Two degrees from Yogi Berra - List the name of each player who appeared on a team with a player that was 
 -- at one time was a teammate of Yogi Berra. So suppose player A was a teammate of Yogi Berra. Then player A is
 -- one-degree of separation from Yogi Berra. Let player B be related to player A because A played on a team in 
 -- the same year with player B. Then player B is two-degrees of separation from Yogi Berra.
-
 
 WITH yogi_berra_id AS (
 	SELECT masterid
@@ -163,7 +164,7 @@ SELECT DISTINCT
 FROM master AS m
 WHERE 
 	m.masterid IN (SELECT masterid FROM second_degree) 
-    -- answer includes those in first DoS as well, uncomment to exclude first DoS
+    -- answer includes those in first DoS as well; uncomment to exclude first DoS
 	-- AND m.masterid NOT IN (SELECT masterid FROM first_degree)
 	AND m.masterid != (SELECT masterid FROM yogi_berra_id)
 ORDER BY m.namelast, m.namefirst
@@ -215,25 +216,36 @@ ORDER BY tdr.name
 -- median number of total wins in the decade (1970-1979 inclusive) (if there are even number of teams, round up 
 -- to find the median).
 
+-- get totals for each team over the seventies
 WITH seventies_wins AS (
-  SELECT
-    teams.name,
-    SUM(w) AS total_wins
-  FROM teams
-  WHERE
-    yearid BETWEEN 1970 AND 1979 AND lgid = 'NL'
-  GROUP BY teams.name
+	SELECT
+		teams.name,
+		SUM(w) AS total_wins
+	FROM teams
+	WHERE yearid BETWEEN 1970 AND 1979 AND lgid = 'NL'
+	GROUP BY teams.name
 ),
 
-ranked_wins AS (
-  SELECT
-    seventies_wins.name,
-    total_wins,
-    DENSE_RANK() OVER (ORDER BY total_wins) AS rank_num,
-    COUNT(*) OVER () AS team_count
-  FROM seventies_wins
+-- give the total wins row_nums in ascending order
+-- this means highest wins is last row
+row_num_wins AS (
+	SELECT
+		seventies_wins.name,
+		total_wins,
+		ROW_NUMBER() OVER (ORDER BY total_wins) AS row_num,
+		COUNT(*) OVER () AS team_count
+	FROM seventies_wins
+),
+
+-- find the median wins
+median_wins AS (
+	SELECT total_wins AS wins
+	FROM row_num_wins
+	-- ranks were assigned in ascending order, so use FLOOR + 1 to get "rounded up" median
+	WHERE row_num = FLOOR(team_count / 2) + 1
 )
 
-SELECT ranked_wins.name, rank_num
-FROM ranked_wins
-WHERE rank_num = CEIL(team_count / 2.0)
+-- select teams that have total_wins = median_wins
+SELECT row_num_wins.name
+FROM row_num_wins
+WHERE total_wins = (SELECT wins FROM median_wins)

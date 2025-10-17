@@ -73,7 +73,8 @@ WITH best_threb_season AS (
 		MAX(threb) as threb_best
 	FROM batting
 		JOIN master USING (masterid)
-	GROUP BY namefirst, namelast, masterid)
+	GROUP BY namefirst, namelast, masterid, yearid
+)
 
 SELECT *
 FROM (
@@ -224,26 +225,37 @@ median number of total wins in the decade (1970-1979 inclusive) (if there are ev
 to find the median).
 
 ```sql
+-- get totals for each team over the seventies
 WITH seventies_wins AS (
-  SELECT
-    teams.name,
-    SUM(w) AS total_wins
-  FROM teams
-  WHERE
-    yearid BETWEEN 1970 AND 1979 AND lgid = 'NL'
-  GROUP BY teams.name
+	SELECT
+		teams.name,
+		SUM(w) AS total_wins
+	FROM teams
+	WHERE yearid BETWEEN 1970 AND 1979 AND lgid = 'NL'
+	GROUP BY teams.name
 ),
 
-ranked_wins AS (
-  SELECT
-    seventies_wins.name,
-    total_wins,
-    DENSE_RANK() OVER (ORDER BY total_wins) AS rank_num,
-    COUNT(*) OVER () AS team_count
-  FROM seventies_wins
+-- give the total wins row_nums in ascending order
+-- this means highest wins is last row
+row_num_wins AS (
+	SELECT
+		seventies_wins.name,
+		total_wins,
+		ROW_NUMBER() OVER (ORDER BY total_wins) AS row_num,
+		COUNT(*) OVER () AS team_count
+	FROM seventies_wins
+),
+
+-- find the median wins
+median_wins AS (
+	SELECT total_wins AS wins
+	FROM row_num_wins
+	-- ranks were assigned in ascending order, so use FLOOR + 1 to get "rounded up" median
+	WHERE row_num = FLOOR(team_count / 2) + 1
 )
 
-SELECT ranked_wins.name, rank_num
-FROM ranked_wins
-WHERE rank_num = CEIL(team_count / 2.0)
+-- select teams that have total_wins = median_wins
+SELECT row_num_wins.name
+FROM row_num_wins
+WHERE total_wins = (SELECT wins FROM median_wins)
 ```
