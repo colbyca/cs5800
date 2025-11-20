@@ -49,8 +49,6 @@ UPDATE teams
 SET l = 200
 WHERE yearid = 2004 AND teamid = 'SFN';
 
-SELECT * FROM batting WHERE yearid = 2004 AND teamid = 'SFN'
-
 -- Constraint 5:
 -- If a batter hits 100 HRs in a year, they are automatically inducted into the Hall of Fame (a new row in the hallOfFame table).
 CREATE OR REPLACE FUNCTION hof_for_100_hr()
@@ -76,9 +74,6 @@ UPDATE batting
 SET hr = 101
 WHERE yearid = 2013 AND masterid = 'aardsda01'
 
-SELECT * FROM halloffame WHERE yearid=2013
-ORDER BY masterid
-
 -- Contstraint 6:
 -- All players must have some salary, i.e., it cannot be null.
 ALTER TABLE salaries
@@ -92,7 +87,7 @@ VALUES (2025, 'BOS', 'AL', 'badnull01', NULL);
 -- Every salaried person has a unique salary, teamid, and year combination.
 ALTER TABLE salaries
 ADD CONSTRAINT unique_salary_team_year
-UNIQUE (masterid, salary, teamid, yearid);
+UNIQUE (salary, teamid, yearid);
 -- Insertion/update/or delete to test the constraint
-INSERT INTO salaries (yearid, teamid, masterid, salary)
-VALUES (2024, 'NYA', 'unique01', 5000), (2024, 'NYA', 'unique01', 5000);
+INSERT INTO salaries (yearid, teamid, lgid, masterid, salary)
+VALUES (2024, 'NYA', 'AL', 'unique01', 5000), (2024, 'NYA', 'AL', 'unique02', 5000);
