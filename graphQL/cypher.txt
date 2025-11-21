@@ -1,0 +1,60 @@
+1. Tag every actor/director with an ACTORDIRECTOR node label, where an actor/director is identified someone who ACTED_IN and DIRECTED some movie (not necessarily the same move).
+```
+MATCH (p:Person)
+WHERE (p)-[:ACTED_IN]->(:Movie) AND (p)-[:DIRECTED]->(:Movie)
+SET p:ACTORDIRECTOR
+return p
+```
+
+2. Return the titles of movies acted in by 'Kevin Bacon'.
+```
+MATCH (kevinbacon:Person {name:'Kevin Bacon'})-[:ACTED_IN]->(m:Movie)
+RETURN m.title
+```
+
+3. Return the count of the actors that act in some movie with Kevin Bacon.
+```
+MATCH (kevinbacon:Person {name:'Kevin Bacon'})-[:ACTED_IN]->(m:Movie)<-[:ACTED_IN]-(p:Person)
+WHERE p <> kevinbacon
+RETURN COUNT(DISTINCT p)
+```
+
+4. Return the actors that are at three degrees or less of separation from 'Kevin Bacon'. One degree of separation are actors who act in a movie with Kevin Bacon, and two degrees of separation are actors who act in a movie with some actor who act in a movie with Kevin Bacon, etc.
+```
+MATCH (kevinbacon:Person {name: "Kevin Bacon"})-[:ACTED_IN*1..6]-(other:Person)
+WHERE kevinbacon <> other
+RETURN DISTINCT other
+```
+
+5. Return the persons and movies such that the person both directed and acted in the movie.
+```
+MATCH (p:Person)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(p)
+RETURN p.name, m.title
+```
+
+6. Return the actors who have acted in 4 or more movies.
+```
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WITH p, COUNT(m) AS movieCount
+WHERE movieCount >= 4
+RETURN p
+```
+
+7. Return the shortest path between Kevin Bacon and Emile Hirsch
+```
+MATCH p = shortestPath((kevinbacon:Person {name: "Kevin Bacon"})-[*]-(emilehirsch:Person {name: "Emile Hirsch"}))
+RETURN p
+```
+
+8. Return the actors that have acted in all of the movies that Emile Hirsch acts in. You may want to form a collection of 'Emile Hirsch' movies and a collection of movies acted in by another person and then use apoc.coll.containsAll to determine if one collection contains (at least) all of the movies that the other has.
+```
+MATCH (emilehirsch:Person {name: "Emile Hirsch"})-[:ACTED_IN]->(ehmovie:Movie)
+WITH emilehirsch, collect(ehmovie) AS emilehirschMovies
+
+MATCH (other:Person)-[:ACTED_IN]->(omovie:Movie)
+WHERE other <> emilehirsch
+WITH other, emilehirschMovies, collect(omovie) AS otherMovies
+
+WHERE apoc.coll.containsAll(otherMovies, emilehirschMovies)
+RETURN other
+```
